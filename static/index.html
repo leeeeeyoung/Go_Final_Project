@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enhanced Memo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="input-section" id="add-memo-section">
+      <h1>Add Memo</h1>
+      <input type="text" id="memo-text" placeholder="Enter your memo">
+      <input type="date" id="memo-date">
+      <select id="memo-type">
+        <option value="Urgent">Urgent</option>
+        <option value="Important">Important</option>
+        <option value="Normal">Normal</option>
+      </select>
+      <button id="add-memo">Add</button>
+    </div>
+
+    <!-- 編輯彈窗 -->
+    <div id="edit-popup" class="edit-popup hidden">
+      <h2>Edit Memo</h2>
+      <input type="text" id="edit-memo-text" placeholder="Edit your memo">
+      <input type="date" id="edit-memo-date">
+      <select id="edit-memo-type">
+        <option value="Urgent">Urgent</option>
+        <option value="Important">Important</option>
+        <option value="Normal">Normal</option>
+      </select>
+      <button id="save-edit">Save</button>
+      <button id="cancel-edit">Cancel</button>
+    </div>
+
+    <div class="memo-section">
+      <h1>Memo List</h1>
+      <ul id="memo-list">
+        <!-- 新增標題列 -->
+        <li class="header-row">
+          <span class="memo-complete-header">Complete</span>
+          <span class="memo-text-header">Task</span>
+          <span class="memo-date-header">Due Date</span>
+          <span class="memo-type-header">Type</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

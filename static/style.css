@@ -1,0 +1,227 @@
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: #f5f5f5;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  display: flex;
+  justify-content: space-between;
+  width: 90%;
+  gap: 20px; /* Add Memo 與 Memo List 之間的空隙 */
+}
+
+.input-section, .memo-section {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.input-section {
+  width: 40%;
+}
+
+.memo-section {
+  width: 55%;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+li {
+  background-color: #f1f1f1;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: grab;
+  transition: transform 0.2s ease, border 0.2s ease;
+}
+
+li.dragging {
+  opacity: 0.5;
+}
+
+.header-row {
+  background-color: #e0e0e0;
+  font-weight: bold;
+}
+
+.memo-text, .memo-date, .memo-type {
+  width: 60%; /* 調整寬度，確保有足夠空間 */
+}
+.memo-complete {
+  width: 5%;
+  margin-left: 0%;
+}
+
+.memo-complete-header {
+  width: 20%;
+}
+
+.memo-text-header {
+  margin-left: 20%;
+  width: 50%;
+}
+
+.memo-date-header {
+  margin-right: 12%;
+  width: 30%
+}
+
+.memo-type-header {
+  margin-right: 20%;
+  width: 20%;
+}
+
+.memo-text {
+  text-align: left;
+}
+
+.memo-type {
+  text-align: center;
+}
+
+li[data-type="Urgent"] {
+  border: 2px solid #ff6f61;
+}
+
+li[data-type="Important"] {
+  border: 2px solid #ffd54f;
+}
+
+li[data-type="Normal"] {
+  border: 2px solid #bdbdbd;
+}
+
+.urgent {
+  border: 2px solid red;
+}
+
+.important {
+  border: 2px solid yellow;
+}
+
+.normal {
+  border: 2px solid gray;
+}
+
+button {
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button.delete {
+  background-color: #e53935;
+}
+
+button.edit {
+  background-color: #ffca28;
+}
+
+button.complete {
+  background-color: #66bb6a;
+}
+
+/* 完全覆蓋Add Memo的彈窗樣式 */
+.edit-popup {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background-color: white;
+  padding: 20px;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.hidden {
+  display: none;
+}
+
+button#save-edit, button#cancel-edit {
+  margin-top: 10px;
+}
+
+input, select {
+  width: 90%;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: #4285f4;
+}
+
+/* Add Memo 和 Edit Memo 區塊樣式 */
+#addMemo, #editMemo {
+  width: 50%;
+  margin: 0 auto; /* 水平置中 */
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-height: 400px; /* 限制區塊高度，避免過長 */
+  overflow-y: auto; /* 超出時顯示滾動條 */
+}
+
+#addMemo input, #editMemo input {
+  display: block;
+  width: 80%; /* 調整寬度讓輸入欄位看起來更美觀 */
+  margin: 10px auto; /* 中間預留空間 */
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Memo List 的樣式 */
+.memo-item {
+  display: grid;
+  grid-template-columns: 10% 40% 20% 10% 20%; /* 每個欄位等比例區隔 */
+  align-items: center;
+  padding: 10px;
+  margin: 10px 0;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  transition: border-color 0.3s ease; /* 加入平滑的邊框顏色變化效果 */
+}
+
+.memo-item.complete {
+  text-decoration: line-through; /* 完成的代辦事項加刪除線 */
+}
+
+/* 完成、描述、日期、編輯和刪除按鈕區域的對齊和間隔 */
+.memo-list-header {
+  display: grid;
+  grid-template-columns: 10% 40% 20% 10% 20%; /* 跟 Memo List 的內容保持一致 */
+  font-weight: bold;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-bottom: 2px solid #ccc;
+}
+
+input.complete-checkbox {
+  margin-left: -10%;
+}
