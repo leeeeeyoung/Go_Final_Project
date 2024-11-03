@@ -1,3 +1,5 @@
+// main.go
+
 package main
 
 import (
@@ -5,33 +7,49 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
+var db *gorm.DB
+
 func main() {
+	// 数据库连接字符串
+	// 替換成你的用戶名與密碼 -> dsn := "username:password@tcp(127.0.0.1:3306)/memo_app?charset=utf8mb4&parseTime=True&loc=Local"
+	dsn := "MySQL10:a123123123123@tcp(127.0.0.1:3306)/memo_app?charset=utf8mb4&parseTime=True&loc=Local"
+	var err error
+	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatal("Failed to connect to database:", err)
+	}
+
+	// 自动迁移，创建表
+	db.AutoMigrate(&User{}, &Memo{})
+
 	router := mux.NewRouter()
 
-	// 靜態檔案伺服器
+	// 静态文件服务器
 	fs := http.FileServer(http.Dir("./static/"))
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
 
-	// 頁面路由
+	// 页面路由
 	router.HandleFunc("/", RedirectToLogin).Methods("GET")
 	router.HandleFunc("/login", LoginPage).Methods("GET")
 	router.HandleFunc("/register", RegisterPage).Methods("GET")
 	router.HandleFunc("/index", AuthMiddleware(IndexPage)).Methods("GET")
 
-	// 用戶相關API
+	// 用户相关API
 	router.HandleFunc("/api/register", RegisterHandler).Methods("POST")
 	router.HandleFunc("/api/login", LoginHandler).Methods("POST")
 	router.HandleFunc("/api/logout", LogoutHandler).Methods("POST")
 
-	// 備忘錄相關API
+	// 备忘录相关API
 	router.HandleFunc("/api/memos", AuthMiddleware(GetMemosHandler)).Methods("GET")
 	router.HandleFunc("/api/memos", AuthMiddleware(CreateMemoHandler)).Methods("POST")
 	router.HandleFunc("/api/memos/{id}", AuthMiddleware(UpdateMemoHandler)).Methods("PUT")
 	router.HandleFunc("/api/memos/{id}", AuthMiddleware(DeleteMemoHandler)).Methods("DELETE")
 
-	// 啟動提醒服務
+	// 启动提醒服务
 	go ReminderService()
 
 	log.Println("Server started at :8080")

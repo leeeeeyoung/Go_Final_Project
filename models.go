@@ -5,27 +5,27 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
-var users = make(map[string]User)
-var memos = make(map[int]Memo)
 var jwtKey = []byte("your_secret_key")
 
 type User struct {
-	ID       int
-	Username string
-	Password string
-	Email    string
+	gorm.Model
+	Username string `gorm:"type:varchar(100);uniqueIndex;not null" json:"username"`
+	Password string `gorm:"type:varchar(255);not null" json:"password"`
+	Email    string `gorm:"type:varchar(100);not null" json:"email"`
+	Memos    []Memo `json:"memos"`
 }
 
 type Memo struct {
-	ID              int        `json:"id"`
-	UserID          int        `json:"user_id"`
-	Title           string     `json:"title"`
-	Content         string     `json:"content"`
-	Type            string     `json:"type"` // 新增的事件类型字段
+	gorm.Model
+	UserID          uint       `gorm:"not null" json:"user_id"`
+	Title           string     `gorm:"type:varchar(200);not null" json:"title"`
+	Content         string     `gorm:"type:text;not null" json:"content"`
+	Type            string     `gorm:"type:varchar(50);not null" json:"type"`
 	ReminderTime    *time.Time `json:"reminder_time,omitempty"`
-	ReminderTimeStr string     `json:"reminder_time_str,omitempty"`
+	ReminderTimeStr string     `gorm:"-" json:"reminder_time_str,omitempty"`
 }
 
 type Credentials struct {
@@ -52,14 +52,4 @@ func GenerateJWT(userID int) (string, error) {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtKey)
-}
-
-func GetMemosByUserID(userID int) []Memo {
-	var userMemos []Memo
-	for _, memo := range memos {
-		if memo.UserID == userID {
-			userMemos = append(userMemos, memo)
-		}
-	}
-	return userMemos
 }

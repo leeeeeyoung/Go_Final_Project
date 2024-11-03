@@ -33,19 +33,20 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	var creds Credentials
 	json.NewDecoder(r.Body).Decode(&creds)
 
-	if _, exists := users[creds.Username]; exists {
+	var existingUser User
+	result := db.Where("username = ?", creds.Username).First(&existingUser)
+	if result.Error == nil {
 		http.Error(w, "User already exists", http.StatusBadRequest)
 		return
 	}
 
 	hashedPassword, _ := HashPassword(creds.Password)
 	user := User{
-		ID:       len(users) + 1,
 		Username: creds.Username,
 		Password: hashedPassword,
 		Email:    creds.Email,
 	}
-	users[creds.Username] = user
+	db.Create(&user)
 
 	w.WriteHeader(http.StatusCreated)
 }
@@ -54,13 +55,19 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var creds Credentials
 	json.NewDecoder(r.Body).Decode(&creds)
 
-	user, exists := users[creds.Username]
-	if !exists || !CheckPasswordHash(creds.Password, user.Password) {
+	var user User
+	result := db.Where("username = ?", creds.Username).First(&user)
+	if result.Error != nil {
 		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
 		return
 	}
 
-	tokenString, err := GenerateJWT(user.ID)
+	if !CheckPasswordHash(creds.Password, user.Password) {
+		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+		return
+	}
+
+	tokenString, err := GenerateJWT(int(user.ID))
 	if err != nil {
 		http.Error(w, "Error generating token", http.StatusInternalServerError)
 		return
@@ -90,9 +97,35 @@ func GetMemosHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var memos []Memo
+	db.Where("user_id = ?", userID).Find(&memos)
+
+	// 对 memos 进行排序
+	sort.SliceStable(memos, func(i, j int) bool {
+		// 首先比较事件类型，重要的在前
+		if memos[i].Type != memos[j].Type {
+			return memos[i].Type == "important"
+		}
+
+		// 然后在相同事件类型下，按照提醒时间从早到晚排序
+		if memos[i].ReminderTime != nil && memos[j].ReminderTime != nil {
+			return memos[i].ReminderTime.Before(*memos[j].ReminderTime)
+		}
+		// 只有一个有提醒时间，有提醒时间的在前
+		if memos[i].ReminderTime != nil {
+			return true
+		}
+		if memos[j].ReminderTime != nil {
+			return false
+		}
+		// 都没有提醒时间，维持原有顺序
+		return false
+	})
+
+	// 构建响应数据
 	type MemoResponse struct {
-		ID           int     `json:"id"`
-		UserID       int     `json:"user_id"`
+		ID           uint    `json:"id"`
+		UserID       uint    `json:"user_id"`
 		Title        string  `json:"title"`
 		Content      string  `json:"content"`
 		Type         string  `json:"type"`
@@ -101,56 +134,20 @@ func GetMemosHandler(w http.ResponseWriter, r *http.Request) {
 
 	var memosResponse []MemoResponse
 	for _, memo := range memos {
-		if memo.UserID == userID {
-			var reminderTimeStr *string
-			if memo.ReminderTime != nil {
-				reminderTime := memo.ReminderTime.Format("2006-01-02T15:04:05")
-				reminderTimeStr = &reminderTime
-			}
-			memosResponse = append(memosResponse, MemoResponse{
-				ID:           memo.ID,
-				UserID:       memo.UserID,
-				Title:        memo.Title,
-				Content:      memo.Content,
-				Type:         memo.Type,
-				ReminderTime: reminderTimeStr,
-			})
+		var reminderTimeStr *string
+		if memo.ReminderTime != nil {
+			reminderTime := memo.ReminderTime.Format("2006-01-02T15:04:05")
+			reminderTimeStr = &reminderTime
 		}
+		memosResponse = append(memosResponse, MemoResponse{
+			ID:           memo.ID,
+			UserID:       memo.UserID,
+			Title:        memo.Title,
+			Content:      memo.Content,
+			Type:         memo.Type,
+			ReminderTime: reminderTimeStr,
+		})
 	}
-
-	// 对 memosResponse 进行排序
-	sort.SliceStable(memosResponse, func(i, j int) bool {
-		// 首先比较事件类型，重要的在前
-		if memosResponse[i].Type != memosResponse[j].Type {
-			return memosResponse[i].Type == "important"
-		}
-
-		// 然后在相同事件类型下，按照提醒时间从早到晚排序
-		var timeI, timeJ time.Time
-		var hasTimeI, hasTimeJ bool
-		if memosResponse[i].ReminderTime != nil {
-			timeI, _ = time.Parse("2006-01-02T15:04:05", *memosResponse[i].ReminderTime)
-			hasTimeI = true
-		}
-		if memosResponse[j].ReminderTime != nil {
-			timeJ, _ = time.Parse("2006-01-02T15:04:05", *memosResponse[j].ReminderTime)
-			hasTimeJ = true
-		}
-
-		// 都有提醒时间
-		if hasTimeI && hasTimeJ {
-			return timeI.Before(timeJ)
-		}
-		// 只有一个有提醒时间，有提醒时间的在前
-		if hasTimeI {
-			return true
-		}
-		if hasTimeJ {
-			return false
-		}
-		// 都没有提醒时间，维持原有顺序
-		return false
-	})
 
 	json.NewEncoder(w).Encode(memosResponse)
 }
@@ -163,12 +160,11 @@ func CreateMemoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var memo Memo
 	json.NewDecoder(r.Body).Decode(&memo)
-	memo.ID = len(memos) + 1
-	memo.UserID = userID
+	memo.UserID = uint(userID)
 
 	// 解析提醒时间
-	location, _ := time.LoadLocation("Local")
 	if memo.ReminderTimeStr != "" {
+		location, _ := time.LoadLocation("Local")
 		reminderTime, err := time.ParseInLocation("2006-01-02T15:04", memo.ReminderTimeStr, location)
 		if err != nil {
 			http.Error(w, "Invalid reminder time format", http.StatusBadRequest)
@@ -179,7 +175,11 @@ func CreateMemoHandler(w http.ResponseWriter, r *http.Request) {
 		memo.ReminderTime = nil
 	}
 
-	memos[memo.ID] = memo
+	// 保存到数据库
+	if err := db.Create(&memo).Error; err != nil {
+		http.Error(w, "Error creating memo", http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusCreated)
 }
 
@@ -192,31 +192,39 @@ func UpdateMemoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	memo, exists := memos[id]
-	if !exists || memo.UserID != userID {
+	var memo Memo
+	result := db.First(&memo, id)
+	if result.Error != nil || memo.UserID != uint(userID) {
 		http.Error(w, "Memo not found", http.StatusNotFound)
 		return
 	}
 
 	var updatedMemo Memo
 	json.NewDecoder(r.Body).Decode(&updatedMemo)
-	updatedMemo.ID = id
-	updatedMemo.UserID = userID
+
+	// 更新字段
+	memo.Title = updatedMemo.Title
+	memo.Content = updatedMemo.Content
+	memo.Type = updatedMemo.Type
 
 	// 解析提醒时间
-	location, _ := time.LoadLocation("Local")
 	if updatedMemo.ReminderTimeStr != "" {
+		location, _ := time.LoadLocation("Local")
 		reminderTime, err := time.ParseInLocation("2006-01-02T15:04", updatedMemo.ReminderTimeStr, location)
 		if err != nil {
 			http.Error(w, "Invalid reminder time format", http.StatusBadRequest)
 			return
 		}
-		updatedMemo.ReminderTime = &reminderTime
+		memo.ReminderTime = &reminderTime
 	} else {
-		updatedMemo.ReminderTime = nil
+		memo.ReminderTime = nil
 	}
 
-	memos[id] = updatedMemo
+	// 保存到数据库
+	if err := db.Save(&memo).Error; err != nil {
+		http.Error(w, "Error updating memo", http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -229,12 +237,13 @@ func DeleteMemoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	memo, exists := memos[id]
-	if !exists || memo.UserID != userID {
+	var memo Memo
+	result := db.First(&memo, id)
+	if result.Error != nil || memo.UserID != uint(userID) {
 		http.Error(w, "Memo not found", http.StatusNotFound)
 		return
 	}
 
-	delete(memos, id)
+	db.Delete(&memo)
 	w.WriteHeader(http.StatusOK)
 }

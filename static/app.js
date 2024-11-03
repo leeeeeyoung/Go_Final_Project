@@ -1,4 +1,4 @@
-// 新增格式化函数
+// 格式化日期时间函数
 function formatDateTimeLocal(date) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始
@@ -18,31 +18,39 @@ function formatDateTimeDisplay(date) {
     return `${year}-${month}-${day} ${hours}:${minutes}`;
 }
 
+// 获取备忘录列表
 async function fetchMemos() {
     const response = await fetch('/api/memos');
     if (response.ok) {
         const memos = await response.json();
+
+        // 对 memos 进行排序（如果需要）
+        // 您可以根据需要在此添加排序逻辑
+
         const memoList = document.getElementById('memo-list');
         memoList.innerHTML = '';
         memos.forEach(memo => {
-            const memoItem = document.createElement('div');
-            memoItem.className = 'col-md-4 memo-item';
-            if (memo.type === 'important') {
-                memoItem.classList.add('important');
-            }
+            // 处理提醒时间
             let reminderTimeText = '未設定';
             let reminderTimeClass = '';
             if (memo.reminder_time) {
                 const reminderTime = new Date(memo.reminder_time);
                 reminderTimeText = formatDateTimeDisplay(reminderTime);
 
-                // 檢查是否小於1天
+                // 检查是否小于1天
                 const now = new Date();
                 const diffTime = reminderTime - now;
                 const diffDays = diffTime / (1000 * 60 * 60 * 24);
                 if (diffDays < 1) {
                     reminderTimeClass = 'text-danger';
                 }
+            }
+
+            // 渲染备忘录
+            const memoItem = document.createElement('div');
+            memoItem.className = 'col-md-4 memo-item';
+            if (memo.type === 'important') {
+                memoItem.classList.add('important');
             }
 
             memoItem.innerHTML = `
@@ -65,11 +73,13 @@ async function fetchMemos() {
     }
 }
 
+// 登出功能
 document.getElementById('logout')?.addEventListener('click', async () => {
     await fetch('/api/logout', { method: 'POST' });
     window.location.href = '/login';
 });
 
+// 新增备忘录
 document.getElementById('create-memo')?.addEventListener('click', () => {
     openMemoModal();
 });
@@ -157,4 +167,5 @@ async function deleteMemo(id) {
     fetchMemos();
 }
 
+// 初始化加载备忘录列表
 fetchMemos();

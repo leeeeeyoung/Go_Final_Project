@@ -8,12 +8,14 @@ import (
 func ReminderService() {
 	for {
 		now := time.Now()
+		var memos []Memo
+		db.Where("reminder_time IS NOT NULL").Find(&memos)
 		for _, memo := range memos {
-			if memo.ReminderTime.IsZero() {
-				continue
-			}
-			if memo.ReminderTime.Sub(now) <= time.Minute && memo.ReminderTime.Sub(now) > 0 {
-				SendReminder(memo)
+			if memo.ReminderTime != nil {
+				diff := memo.ReminderTime.Sub(now)
+				if diff <= time.Minute && diff > 0 {
+					SendReminder(memo)
+				}
 			}
 		}
 		time.Sleep(time.Minute)
@@ -21,6 +23,6 @@ func ReminderService() {
 }
 
 func SendReminder(memo Memo) {
-	// 實現通知功能，例如打印到控制台
+	// 实现通知功能，例如打印到控制台
 	fmt.Printf("提醒：%s - %s\n", memo.Title, memo.Content)
 }
