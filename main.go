@@ -1,104 +1,39 @@
 package main
 
 import (
-	"encoding/json"
+	"log"
 	"net/http"
-	"strconv"
-	"time"
+
+	"github.com/gorilla/mux"
 )
 
-type Memo struct {
-	ID        int    `json:"id"`
-	Text      string `json:"text"`
-	DueDate   string `json:"dueDate"`
-	Timestamp string `json:"timestamp"`
-	Type      string `json:"type"` // 新增類型屬性
-}
-
-var memos []Memo
-var idCounter int
-
 func main() {
-	http.Handle("/", http.FileServer(http.Dir("./static")))
-	http.HandleFunc("/add-memo", addMemoHandler)
-	http.HandleFunc("/edit-memo/", editMemoHandler)
-	http.HandleFunc("/delete-memo/", deleteMemoHandler)
-	http.ListenAndServe(":8080", nil)
-}
+	router := mux.NewRouter()
 
-func addMemoHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		var newMemo Memo
-		err := json.NewDecoder(r.Body).Decode(&newMemo)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		idCounter++
-		newMemo.ID = idCounter
-		newMemo.Timestamp = time.Now().Format("2006-01-02 15:04:05")
-		memos = append(memos, newMemo)
+	// 靜態檔案伺服器
+	fs := http.FileServer(http.Dir("./static/"))
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
 
-		response := map[string]interface{}{
-			"success":   true,
-			"id":        newMemo.ID,
-			"timestamp": newMemo.Timestamp,
-		}
-		json.NewEncoder(w).Encode(response)
-	}
-}
+	// 頁面路由
+	router.HandleFunc("/", RedirectToLogin).Methods("GET")
+	router.HandleFunc("/login", LoginPage).Methods("GET")
+	router.HandleFunc("/register", RegisterPage).Methods("GET")
+	router.HandleFunc("/index", AuthMiddleware(IndexPage)).Methods("GET")
 
-func editMemoHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPut {
-		idStr := r.URL.Path[len("/edit-memo/"):]
-		id, err := strconv.Atoi(idStr)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+	// 用戶相關API
+	router.HandleFunc("/api/register", RegisterHandler).Methods("POST")
+	router.HandleFunc("/api/login", LoginHandler).Methods("POST")
+	router.HandleFunc("/api/logout", LogoutHandler).Methods("POST")
 
-		var updatedMemo Memo
-		err = json.NewDecoder(r.Body).Decode(&updatedMemo)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+	// 備忘錄相關API
+	router.HandleFunc("/api/memos", AuthMiddleware(GetMemosHandler)).Methods("GET")
+	router.HandleFunc("/api/memos", AuthMiddleware(CreateMemoHandler)).Methods("POST")
+	router.HandleFunc("/api/memos/{id}", AuthMiddleware(UpdateMemoHandler)).Methods("PUT")
+	router.HandleFunc("/api/memos/{id}", AuthMiddleware(DeleteMemoHandler)).Methods("DELETE")
 
-		for i := range memos {
-			if memos[i].ID == id {
-				memos[i].Text = updatedMemo.Text
-				memos[i].DueDate = updatedMemo.DueDate
-				memos[i].Type = updatedMemo.Type // 更新類型屬性
-				break
-			}
-		}
+	// 啟動提醒服務
+	go ReminderService()
 
-		response := map[string]interface{}{
-			"success": true,
-		}
-		json.NewEncoder(w).Encode(response)
-	}
-}
-
-func deleteMemoHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodDelete {
-		idStr := r.URL.Path[len("/delete-memo/"):]
-		id, err := strconv.Atoi(idStr)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		for i := range memos {
-			if memos[i].ID == id {
-				memos = append(memos[:i], memos[i+1:]...)
-				break
-			}
-		}
-
-		response := map[string]interface{}{
-			"success": true,
-		}
-		json.NewEncoder(w).Encode(response)
-	}
+	log.Println("Server started at :8080")
+	http.ListenAndServe(":8080", router)
 }

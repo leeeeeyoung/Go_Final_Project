@@ -1,0 +1,44 @@
+/* 自定義樣式 */
+body {
+    font-family: Arial, sans-serif;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+#memo-list .memo-item {
+    margin-bottom: 20px;
+}
+
+.memo-item .card {
+    border: 1px solid #ccc;
+}
+
+.memo-item.important .card {
+    border-color: #dc3545;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1050;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal.show {
+    display: block;
+}
+
+.close {
+    cursor: pointer;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}

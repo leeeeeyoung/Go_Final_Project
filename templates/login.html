@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>登入</title>
+    <!-- 引入Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">登入</h1>
+        <form id="login-form" class="mt-4">
+            <div class="form-group">
+                <label for="username">用戶名</label>
+                <input type="text" class="form-control" id="username" placeholder="輸入用戶名" required>
+            </div>
+            <div class="form-group">
+                <label for="password">密碼</label>
+                <input type="password" class="form-control" id="password" placeholder="輸入密碼" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">登入</button>
+        </form>
+        <p class="text-center mt-3">沒有帳號？<a href="/register">註冊</a></p>
+    </div>
+
+    <!-- 引入Bootstrap的JS -->
+    <script src="/static/auth.js"></script>
+</body>
+</html>
