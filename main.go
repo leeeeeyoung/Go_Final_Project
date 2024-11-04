@@ -48,6 +48,7 @@ func main() {
 	router.HandleFunc("/api/memos", AuthMiddleware(CreateMemoHandler)).Methods("POST")
 	router.HandleFunc("/api/memos/{id}", AuthMiddleware(UpdateMemoHandler)).Methods("PUT")
 	router.HandleFunc("/api/memos/{id}", AuthMiddleware(DeleteMemoHandler)).Methods("DELETE")
+	router.HandleFunc("/api/memos/{id}/complete", AuthMiddleware(CompleteMemoHandler)).Methods("POST")
 
 	// 启动提醒服务
 	go ReminderService()

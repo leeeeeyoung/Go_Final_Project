@@ -1,3 +1,5 @@
+// models.go
+
 package main
 
 import (
@@ -8,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var jwtKey = []byte("your_secret_key")
+var jwtKey []byte
 
 type User struct {
 	gorm.Model
@@ -26,6 +28,7 @@ type Memo struct {
 	Type            string     `gorm:"type:varchar(50);not null" json:"type"`
 	ReminderTime    *time.Time `json:"reminder_time,omitempty"`
 	ReminderTimeStr string     `gorm:"-" json:"reminder_time_str,omitempty"`
+	Completed       bool       `gorm:"default:false" json:"completed"`
 }
 
 type Credentials struct {
