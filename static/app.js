@@ -20,9 +20,12 @@ function formatDateTimeDisplay(date) {
     return `${year}-${month}-${day} ${hours}:${minutes}`;
 }
 
+// 当前选择的排序方式
+let currentSortBy = "time";
+
 // 获取备忘录列表
 async function fetchMemos() {
-    const response = await fetch('/api/memos');
+    const response = await fetch(`/api/memos?sort_by=${currentSortBy}`);
     if (response.ok) {
         const memos = await response.json();
 
@@ -91,8 +94,68 @@ async function fetchMemos() {
             `;
             memoList.appendChild(memoItem);
         });
+
+        // 初始化或更新拖放功能
+        initializeDragAndDrop();
     } else {
         window.location.href = '/login';
+    }
+}
+
+// 初始化拖放功能
+function initializeDragAndDrop() {
+    const memoList = document.getElementById('memo-list');
+    if (memoList.getAttribute('data-sortable-initialized') === 'true') {
+        // 已初始化，避免重复初始化
+        return;
+    }
+
+    Sortable.create(memoList, {
+        animation: 150,
+        handle: '.card', // 可以选择拖动的区域，例如整个卡片
+        onEnd: function (evt) {
+            // 获取新的排序顺序
+            const sortedItems = Array.from(memoList.children).map(child => {
+                // 从按钮的 onclick 属性中提取 memo.id
+                const completeButton = child.querySelector('.btn-outline-success, .btn-outline-warning');
+                const onclickAttr = completeButton.getAttribute('onclick');
+                const idMatch = onclickAttr.match(/toggleCompleteMemo\((\d+)\)/);
+                return idMatch ? parseInt(idMatch[1]) : null;
+            }).filter(id => id !== null);
+
+            // 构建排序数据
+            const sortData = sortedItems.map((id, index) => {
+                return {
+                    id: id,
+                    sort_order: index + 1
+                };
+            });
+
+            // 发送排序数据到后端
+            updateMemosSort(sortData);
+
+            // 自动切换排序选单为“自定义排序”
+            const sortSelect = document.getElementById('sort-options');
+            sortSelect.value = 'custom';
+            currentSortBy = 'custom';
+        }
+    });
+
+    memoList.setAttribute('data-sortable-initialized', 'true');
+}
+
+// 发送排序数据到后端
+async function updateMemosSort(sortData) {
+    const response = await fetch('/api/memos/sort', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sortData)
+    });
+
+    if (response.ok) {
+        console.log('排序更新成功');
+    } else {
+        alert('排序更新失败');
     }
 }
 
@@ -105,6 +168,12 @@ document.getElementById('logout')?.addEventListener('click', async () => {
 // 新增备忘录
 document.getElementById('create-memo')?.addEventListener('click', () => {
     openMemoModal();
+});
+
+// 监听排序选单的变化
+document.getElementById('sort-options').addEventListener('change', (e) => {
+    currentSortBy = e.target.value;
+    fetchMemos();
 });
 
 function openMemoModal(memo = {}) {

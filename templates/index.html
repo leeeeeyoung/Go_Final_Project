@@ -17,6 +17,9 @@
     <!-- 引入 Bootstrap CSS (可選，如果您希望使用 Bootstrap) -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     
+    <!-- 引入 SortableJS -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    
     <!-- 引入自定義 JavaScript -->
     <script defer src="/static/app.js"></script>
 </head>
@@ -41,9 +44,21 @@
     <div class="container">
         <h1 class="page-title">您的備忘錄</h1>
         
-        <!-- 新增備忘錄按鈕 -->
-        <div class="mb-4 text-right">
-            <button class="btn btn-primary" id="create-memo"><i class="fas fa-plus"></i> 新增備忘錄</button>
+        <!-- 排序選單和新增備忘錄按鈕 -->
+        <div class="d-flex justify-content-between mb-4">
+            <!-- 排序選單 -->
+            <div>
+                <select class="form-control" id="sort-options">
+                    <option value="time">按時間排序</option>
+                    <option value="importance">按重要程度排序</option>
+                    <option value="custom">自訂義排序</option>
+                </select>
+            </div>
+            
+            <!-- 新增備忘錄按鈕 -->
+            <div>
+                <button class="btn btn-primary" id="create-memo"><i class="fas fa-plus"></i> 新增備忘錄</button>
+            </div>
         </div>
         
         <!-- 備忘錄列表 -->

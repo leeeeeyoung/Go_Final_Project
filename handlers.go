@@ -8,7 +8,6 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -110,30 +109,35 @@ func GetMemosHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 获取排序参数
+	sortBy := r.URL.Query().Get("sort_by") // "time", "importance", "custom"
 	var memos []Memo
-	db.Where("user_id = ?", userID).Find(&memos)
 
-	// 对 memos 进行排序
-	sort.SliceStable(memos, func(i, j int) bool {
-		// 首先比较事件类型，重要的在前
-		if memos[i].Type != memos[j].Type {
-			return memos[i].Type == "important"
-		}
-
-		// 然后在相同事件类型下，按照提醒时间从早到晚排序
-		if memos[i].ReminderTime != nil && memos[j].ReminderTime != nil {
-			return memos[i].ReminderTime.Before(*memos[j].ReminderTime)
-		}
-		// 只有一个有提醒时间，有提醒时间的在前
-		if memos[i].ReminderTime != nil {
-			return true
-		}
-		if memos[j].ReminderTime != nil {
-			return false
-		}
-		// 都没有提醒时间，维持原有顺序
-		return false
-	})
+	switch sortBy {
+	case "time":
+		// 按提醒时间排序，如果提醒时间相同，按重要程度排序
+		db.Where("user_id = ?", userID).
+			Order("reminder_time ASC").
+			Order("CASE WHEN type = 'important' THEN 1 ELSE 2 END ASC").
+			Find(&memos)
+	case "importance":
+		// 按重要程度排序，如果重要程度相同，按提醒时间排序
+		db.Where("user_id = ?", userID).
+			Order("CASE WHEN type = 'important' THEN 1 ELSE 2 END ASC").
+			Order("reminder_time ASC").
+			Find(&memos)
+	case "custom":
+		// 按 SortOrder 排序
+		db.Where("user_id = ?", userID).
+			Order("sort_order ASC").
+			Find(&memos)
+	default:
+		// 默认排序，按提醒时间排序
+		db.Where("user_id = ?", userID).
+			Order("reminder_time ASC").
+			Order("CASE WHEN type = 'important' THEN 1 ELSE 2 END ASC").
+			Find(&memos)
+	}
 
 	// 构建响应数据
 	type MemoResponse struct {
@@ -144,6 +148,7 @@ func GetMemosHandler(w http.ResponseWriter, r *http.Request) {
 		Type         string  `json:"type"`
 		ReminderTime *string `json:"reminder_time"`
 		Completed    bool    `json:"completed"`
+		SortOrder    int     `json:"sort_order"`
 	}
 
 	var memosResponse []MemoResponse
@@ -161,6 +166,7 @@ func GetMemosHandler(w http.ResponseWriter, r *http.Request) {
 			Type:         memo.Type,
 			ReminderTime: reminderTimeStr,
 			Completed:    memo.Completed,
+			SortOrder:    memo.SortOrder,
 		})
 	}
 
@@ -189,6 +195,11 @@ func CreateMemoHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		memo.ReminderTime = nil
 	}
+
+	// 设置 SortOrder 为当前用户的最大 SortOrder + 1
+	var maxSortOrder int
+	db.Model(&Memo{}).Where("user_id = ?", userID).Select("COALESCE(MAX(sort_order), 0)").Scan(&maxSortOrder)
+	memo.SortOrder = maxSortOrder + 1
 
 	// 保存到数据库
 	if err := db.Create(&memo).Error; err != nil {
@@ -341,4 +352,57 @@ func CompleteMemoHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]bool{
 		"completed": memo.Completed,
 	})
+}
+
+func UpdateMemosSortHandler(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(UserIDKey).(int)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var sortData []struct {
+		ID        uint `json:"id"`
+		SortOrder int  `json:"sort_order"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&sortData); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// 使用事务确保数据一致性
+	tx := db.Begin()
+	if tx.Error != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	for _, item := range sortData {
+		var memo Memo
+		if err := tx.Where("id = ? AND user_id = ?", item.ID, userID).First(&memo).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				tx.Rollback()
+				http.Error(w, "Memo not found or unauthorized", http.StatusNotFound)
+				return
+			}
+			tx.Rollback()
+			http.Error(w, "Database error", http.StatusInternalServerError)
+			return
+		}
+
+		memo.SortOrder = item.SortOrder
+		if err := tx.Save(&memo).Error; err != nil {
+			tx.Rollback()
+			http.Error(w, "Failed to update sort order", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		http.Error(w, "Failed to commit transaction", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

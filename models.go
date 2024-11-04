@@ -29,6 +29,7 @@ type Memo struct {
 	ReminderTime    *time.Time `json:"reminder_time,omitempty"`
 	ReminderTimeStr string     `gorm:"-" json:"reminder_time_str,omitempty"`
 	Completed       bool       `gorm:"default:false" json:"completed"`
+	SortOrder       int        `gorm:"default:0;index" json:"sort_order"`
 }
 
 type Credentials struct {

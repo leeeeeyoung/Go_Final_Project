@@ -52,6 +52,7 @@ body {
 /* 备忘录列表样式 */
 #memo-list .memo-item {
     margin-bottom: 30px;
+    cursor: move; /* 显示拖动手柄 */
 }
 
 .memo-item .card {
