@@ -1,9 +1,9 @@
 /* static/styles.css */
 
-/* 引入Google字体 */
+/* 引入Google字體 */
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
-/* 基本样式 */
+/* 基本樣式 */
 body {
     font-family: 'Roboto', Arial, sans-serif;
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
@@ -13,13 +13,89 @@ body {
     transition: all 0.3s ease;
 }
 
-/* 导航栏样式 */
+/* 漢堡圖標樣式 */
+.hamburger {
+    position: fixed;
+    top: 15px;
+    left: 20px;
+    cursor: pointer;
+    z-index: 1000;
+}
+
+.hamburger .line {
+    width: 30px;
+    height: 3px;
+    background-color: #333;
+    margin: 5px;
+    transition: 0.4s;
+}
+
+/* 添加一個類，當 sidebar 開啟時變 X 形 */
+.hamburger.open .line:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+}
+
+.hamburger.open .line:nth-child(2) {
+    opacity: 0; /* 隱藏中間的線 */
+}
+
+.hamburger.open .line:nth-child(3) {
+    transform: rotate(-45deg) translate(5px, -5px);
+}
+
+/* Sidebar 樣式 */
+.sidebar {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: #f8f9fa;
+    overflow-x: hidden;
+    transition: 0.5s;
+    z-index: 999;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    padding: 20px;
+    padding-left: 30px;
+    text-align: left;
+}
+
+.sidebar ul li a {
+    text-decoration: none;
+    color: #333;
+    display: block;
+}
+
+.sidebar ul li a:hover {
+    color: #007bff;
+}
+
+.background img {
+    width: 100%; /* 圖片寬度設為 100%，使其適應 Sidebar */
+    height: auto; /* 保持圖片的比例 */
+}
+
+.divider {
+    height: 1px;
+    overflow: hidden;
+    background-color: #e0e0e0;
+}
+
+/* 導覽列樣式 */
 .navbar {
     background-color: #ffffff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .navbar-brand {
+    padding-left: 60px; /* 給導航欄一些額外的左邊距，避免重疊 */
     font-weight: 700;
     font-size: 1.5rem;
     color: #007bff !important;
@@ -33,14 +109,15 @@ body {
 
 .navbar-nav .nav-link:hover {
     color: #007bff !important;
+    font-weight: bold;
 }
 
-/* 主内容区域 */
+/* 主內容區域 */
 .container {
     padding: 40px 20px;
 }
 
-/* 页面标题样式 */
+/* 頁面標題樣式 */
 .page-title {
     font-size: 2rem;
     font-weight: 700;
@@ -49,10 +126,10 @@ body {
     text-align: center;
 }
 
-/* 备忘录列表样式 */
+/* 備忘錄清單樣式 */
 #memo-list .memo-item {
     margin-bottom: 30px;
-    cursor: move; /* 显示拖动手柄 */
+    cursor: move; /* 顯示拖曳手柄 */
 }
 
 .memo-item .card {
@@ -86,7 +163,7 @@ body {
     color: #666666;
 }
 
-/* 完成状态样式 */
+/* 完成狀態樣式 */
 .memo-item.completed .card {
     background-color: #e2e3e5;
 }
@@ -100,10 +177,10 @@ body {
     color: #6c757d;
 }
 
-/* 按钮样式 */
+/* 按鈕樣式 */
 .btn {
     border-radius: 50px;
-    padding: 8px 16px; /* 调整内边距以匹配按钮大小 */
+    padding: 8px 16px; /* 調整內邊距以符合按鈕大小 */
     font-weight: 500;
     transition: background-color 0.3s, transform 0.2s;
 }
@@ -144,8 +221,8 @@ body {
 .btn-outline-success {
     color: #28a745;
     border-color: #28a745;
-    font-size: 1rem; /* 确保字体大小一致 */
-    padding: 8px 16px; /* 调整内边距以匹配其他按钮 */
+    font-size: 1rem; /* 確保字體大小一致 */
+    padding: 8px 16px; /* 調整內邊距以配合其他按鈕 */
 }
 
 .btn-outline-success:hover {
@@ -159,7 +236,7 @@ body {
     font-size: 0.875rem;
 }
 
-/* 模态框样式 */
+/* 模態框樣式 */
 .modal {
     display: none;
     position: fixed;
@@ -221,7 +298,7 @@ body {
     text-align: right;
 }
 
-/* 表单输入样式 */
+/* 表單輸入樣式 */
 .form-control {
     border-radius: 8px;
     border: 1px solid #ced4da;
@@ -235,13 +312,13 @@ body {
     box-shadow: 0 0 5px rgba(0,123,255,0.5);
 }
 
-/* 提醒时间文本样式 */
+/* 提醒時間文字樣式 */
 .text-danger {
     color: #dc3545 !important;
     font-weight: 600;
 }
 
-/* 响应式设计 */
+/* 響應式設計 */
 @media (max-width: 768px) {
     .modal-dialog {
         margin: 50px auto;
@@ -252,14 +329,13 @@ body {
     }
 }
 
-/* 其他增强样式 */
+/* 其他增強樣式 */
 
-/* 增加按钮悬停动画 */
+/* 增加按鈕懸停動畫 */
 .btn:hover {
     transform: translateY(-2px);
 }
 
-/* 表格样式（如果有） */
 .table {
     width: 100%;
     margin-bottom: 1rem;
@@ -279,7 +355,7 @@ body {
     overflow-x: auto;
 }
 
-/* 增加卡片按钮布局 */
+/* 增加卡片按鈕布局 */
 .memo-item .card-body {
     position: relative;
     display: flex;
@@ -297,7 +373,7 @@ body {
     align-items: center;
 }
 
-/* 增加页面标题样式 */
+/* 頁面標題樣式 */
 .page-title {
     font-size: 2rem;
     font-weight: 700;
@@ -306,12 +382,31 @@ body {
     text-align: center;
 }
 
-/* 增加背景渐变 */
+/* 背景漸變 */
 body {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
 }
 
-/* 增加过渡效果 */
+/* 過渡效果 */
 * {
     transition: all 0.3s ease;
+}
+
+.footer {
+    font-size: 0.8em;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: gray;
+    align-items: center;
+}
+
+.material-symbols-outlined {
+    font-size: 1.5em;
+    padding-right: 5px;
+    display: inline-block;
+    vertical-align: middle;
+    transform: translateY(-.1em);
 }

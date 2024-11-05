@@ -14,7 +14,7 @@ import (
 var db *gorm.DB
 
 func main() {
-	// 数据库连接字符串
+	// 資料庫連接字串
 	// 替換成你的用戶名與密碼 -> dsn := "username:password@tcp(127.0.0.1:3306)/memo_app?charset=utf8mb4&parseTime=True&loc=Local"
 	dsn := "username:password@tcp(127.0.0.1:3306)/memo_app?charset=utf8mb4&parseTime=True&loc=Local"
 	var err error
@@ -23,27 +23,28 @@ func main() {
 		log.Fatal("Failed to connect to database:", err)
 	}
 
-	// 自动迁移，创建表
+	// 自動遷移，建立表
 	db.AutoMigrate(&User{}, &Memo{})
 
 	router := mux.NewRouter()
 
-	// 静态文件服务器
+	// 靜態檔案伺服器
 	fs := http.FileServer(http.Dir("./static/"))
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
 
-	// 页面路由
+	// 頁面連結
 	router.HandleFunc("/", RedirectToLogin).Methods("GET")
 	router.HandleFunc("/login", LoginPage).Methods("GET")
 	router.HandleFunc("/register", RegisterPage).Methods("GET")
 	router.HandleFunc("/index", AuthMiddleware(IndexPage)).Methods("GET")
 
-	// 用户相关API
+	// 用户相關API
 	router.HandleFunc("/api/register", RegisterHandler).Methods("POST")
 	router.HandleFunc("/api/login", LoginHandler).Methods("POST")
+	router.HandleFunc("/api/users", GetUsersHandler).Methods("GET")
 	router.HandleFunc("/api/logout", LogoutHandler).Methods("POST")
 
-	// 备忘录相关API
+	// 備忘錄相關API
 	router.HandleFunc("/api/memos", AuthMiddleware(GetMemosHandler)).Methods("GET")
 	router.HandleFunc("/api/memos", AuthMiddleware(CreateMemoHandler)).Methods("POST")
 	router.HandleFunc("/api/memos/{id}", AuthMiddleware(UpdateMemoHandler)).Methods("PUT")
@@ -53,7 +54,7 @@ func main() {
 	// 新增 API 端点：更新排序
 	router.HandleFunc("/api/memos/sort", AuthMiddleware(UpdateMemosSortHandler)).Methods("POST")
 
-	// 启动提醒服务
+	// 啟動提醒服務
 	go ReminderService()
 
 	log.Println("Server started at :8080")

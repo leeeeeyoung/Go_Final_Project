@@ -23,6 +23,6 @@ func ReminderService() {
 }
 
 func SendReminder(memo Memo) {
-	// 实现通知功能，例如打印到控制台
+	// 實現通知功能，例如輸出到控制台
 	fmt.Printf("提醒：%s - %s\n", memo.Title, memo.Content)
 }

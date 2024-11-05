@@ -7,6 +7,9 @@
     
     <!-- 引入 Google 字體 -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Import Google Icon -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=handshake" />
     
     <!-- 引入 Font Awesome 圖標 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2DhKNVVucbZ1Z1jYH4Mkg1S5aZgpCgq0JtmRcaHBGXv9PrV3N1tGdy06pazSTXQ4A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -14,7 +17,7 @@
     <!-- 引入自定義樣式 -->
     <link rel="stylesheet" href="/static/styles.css">
     
-    <!-- 引入 Bootstrap CSS (可選，如果您希望使用 Bootstrap) -->
+    <!-- 引入 Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     
     <!-- 引入 SortableJS -->
@@ -22,15 +25,30 @@
     
     <!-- 引入自定義 JavaScript -->
     <script defer src="/static/app.js"></script>
+    <script defer src="/static/index.js"></script>
 </head>
 <body>
+    <!-- Hamburger Menu Icon -->
+    <div class="hamburger" onclick="toggleSidebar()">
+        <div class="line"></div>
+        <div class="line"></div>
+        <div class="line"></div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <ul class="sidebar-menu">
+            <div class="background">
+                <img src="../static/images/office.jpg">
+            </div>
+            <ul id="user-list"></ul>
+            <li><div class="divider"></div></li>
+        </ul>
+    </div>
+
     <!-- 導航欄 -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
-        <a class="navbar-brand" href="#">備忘錄系統</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" 
-                aria-controls="navbarNav" aria-expanded="false" aria-label="切換導航">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+        <a class="navbar-brand">備忘錄系統</a>
         <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
             <ul class="navbar-nav">
                 <li class="nav-item">
@@ -103,8 +121,15 @@
             </div>
         </div>
     </div>
+
+    <div class="footer">
+      <p>
+        <span class="material-symbols-outlined">handshake</span>
+        Group 10 Final Project
+      </p>
+    </div>
     
-    <!-- 引入 jQuery 和 Bootstrap JS (可選，如果您使用 Bootstrap 的 JavaScript 功能) -->
+    <!-- 引入 jQuery 和 Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" 
             integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" 
             crossorigin="anonymous"></script>

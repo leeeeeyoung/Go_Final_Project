@@ -102,6 +102,18 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// GetUsers 函數
+func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
+	var users []User
+	if err := db.Find(&users).Error; err != nil {
+		http.Error(w, "Error fetching users", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(users)
+}
+
 func GetMemosHandler(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(UserIDKey).(int)
 	if !ok {
@@ -109,7 +121,7 @@ func GetMemosHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 获取排序参数
+	// 取得排序參數
 	sortBy := r.URL.Query().Get("sort_by") // "time", "importance", "custom"
 	var memos []Memo
 
@@ -132,14 +144,14 @@ func GetMemosHandler(w http.ResponseWriter, r *http.Request) {
 			Order("sort_order ASC").
 			Find(&memos)
 	default:
-		// 默认排序，按提醒时间排序
+		// 預設排序，依提醒時間排序
 		db.Where("user_id = ?", userID).
 			Order("reminder_time ASC").
 			Order("CASE WHEN type = 'important' THEN 1 ELSE 2 END ASC").
 			Find(&memos)
 	}
 
-	// 构建响应数据
+	// 建構響應數據
 	type MemoResponse struct {
 		ID           uint    `json:"id"`
 		UserID       uint    `json:"user_id"`
@@ -196,12 +208,12 @@ func CreateMemoHandler(w http.ResponseWriter, r *http.Request) {
 		memo.ReminderTime = nil
 	}
 
-	// 设置 SortOrder 为当前用户的最大 SortOrder + 1
+	// 設定 SortOrder 為目前使用者的最大 SortOrder + 1
 	var maxSortOrder int
 	db.Model(&Memo{}).Where("user_id = ?", userID).Select("COALESCE(MAX(sort_order), 0)").Scan(&maxSortOrder)
 	memo.SortOrder = maxSortOrder + 1
 
-	// 保存到数据库
+	// 儲存到資料庫
 	if err := db.Create(&memo).Error; err != nil {
 		http.Error(w, "Error creating memo", http.StatusInternalServerError)
 		log.Printf("Error creating memo: %v", err)
@@ -262,7 +274,7 @@ func UpdateMemoHandler(w http.ResponseWriter, r *http.Request) {
 		memo.ReminderTime = nil
 	}
 
-	// 保存到数据库
+	// 儲存到資料庫
 	if err := db.Save(&memo).Error; err != nil {
 		http.Error(w, "Error updating memo", http.StatusInternalServerError)
 		log.Printf("Error updating memo: %v", err)
@@ -306,7 +318,7 @@ func DeleteMemoHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// 新增函数：切换完成状态
+// 新增函數：切換完成狀態
 func CompleteMemoHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
@@ -371,7 +383,7 @@ func UpdateMemosSortHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 使用事务确保数据一致性
+	// 確保資料一致性
 	tx := db.Begin()
 	if tx.Error != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
