@@ -186,6 +186,18 @@ function openMemoModal(memo = {}) {
     document.getElementById('memo-reminder-time').value = memo.reminder_time ? formatDateTimeLocal(new Date(memo.reminder_time)) : '';
     document.getElementById('memo-form').onsubmit = (e) => {
         e.preventDefault();
+        
+        // 獲取提醒時間的輸入值
+        const reminderTimeInput = document.getElementById('memo-reminder-time').value;
+        const reminderTime = new Date(reminderTimeInput);
+        const now = new Date();
+
+        // 檢查提醒時間是否為未來時間
+        if (isNaN(reminderTime.getTime()) || reminderTime <= now) {
+            alert("提醒時間無效，必須設置為今天之後");
+            return; // 如果無效，終止提交
+        }
+        
         if (memo.id) {
             updateMemo(memo.id);
         } else {
@@ -253,10 +265,16 @@ async function updateMemo(id) {
 }
 
 async function deleteMemo(id) {
-    await fetch(`/api/memos/${id}`, {
-        method: 'DELETE'
-    });
-    fetchMemos();
+    // 顯示確認框，詢問用戶是否確定要刪除
+    const confirmed = confirm("確定要刪除這個備忘錄嗎？這個操作無法撤回。");
+
+    // 如果用戶選擇確定，則執行刪除操作
+    if (confirmed) {
+        await fetch(`/api/memos/${id}`, {
+            method: 'DELETE'
+        });
+        fetchMemos(); // 重新獲取備忘錄列表
+    }
 }
 
 // 新增函数：切换完成状态
