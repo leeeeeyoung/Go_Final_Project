@@ -41,7 +41,7 @@ func main() {
 	// 用户相關API
 	router.HandleFunc("/api/register", RegisterHandler).Methods("POST")
 	router.HandleFunc("/api/login", LoginHandler).Methods("POST")
-	router.HandleFunc("/api/users", GetUsersHandler).Methods("GET")
+	router.HandleFunc("/api/user", GetUserHandler).Methods("GET")
 	router.HandleFunc("/api/logout", LogoutHandler).Methods("POST")
 
 	// 備忘錄相關API

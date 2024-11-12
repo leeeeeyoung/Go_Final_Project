@@ -1,8 +1,7 @@
-// models.go
-
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -56,4 +55,28 @@ func GenerateJWT(userID int) (string, error) {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtKey)
+}
+
+// ParseJWT 用來解析並驗證 JWT token，並返回 user ID
+func ParseJWT(tokenString string) (int, error) {
+	// 解析並驗證 token
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// 驗證使用的簽名方法
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return jwtKey, nil
+	})
+
+	if err != nil || !token.Valid {
+		return 0, err
+	}
+
+	// 從 claims 中提取 user_id
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		userID := int(claims["user_id"].(float64))
+		return userID, nil
+	}
+
+	return 0, fmt.Errorf("invalid token")
 }

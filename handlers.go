@@ -102,16 +102,32 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// GetUsers 函數
-func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
-	var users []User
-	if err := db.Find(&users).Error; err != nil {
-		http.Error(w, "Error fetching users", http.StatusInternalServerError)
+// GetUser 函數
+func GetUserHandler(w http.ResponseWriter, r *http.Request) {
+	// 從 Cookie 中取得 token
+	cookie, err := r.Cookie("token")
+	if err != nil {
+		http.Error(w, "Missing token", http.StatusUnauthorized)
 		return
 	}
 
+	// 驗證 token 並取得用戶 ID
+	userId, err := ParseJWT(cookie.Value)
+	if err != nil {
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
+		return
+	}
+
+	// 查詢資料庫中該用戶的資料
+	var user User
+	if err := db.First(&user, userId).Error; err != nil {
+		http.Error(w, "Error fetching user data", http.StatusInternalServerError)
+		return
+	}
+
+	// 將使用者資料轉為 JSON 回傳
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(users)
+	json.NewEncoder(w).Encode([]User{user})
 }
 
 func GetMemosHandler(w http.ResponseWriter, r *http.Request) {
