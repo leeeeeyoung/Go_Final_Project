@@ -12,7 +12,7 @@ function toggleSidebar() {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-    fetch('/api/user')
+    fetch('/api/users')
         .then(response => response.json())
         .then(users => {
             const userList = document.getElementById('user-list');
