@@ -22,6 +22,7 @@ type User struct {
 type Memo struct {
 	gorm.Model
 	UserID          uint       `gorm:"not null" json:"user_id"`
+	User            User       `gorm:"foreignKey:UserID" json:"user"`
 	Title           string     `gorm:"type:varchar(200);not null" json:"title"`
 	Content         string     `gorm:"type:text;not null" json:"content"`
 	Type            string     `gorm:"type:varchar(50);not null" json:"type"`
