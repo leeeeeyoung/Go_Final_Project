@@ -1,29 +1,29 @@
 // static/app.js
 
-// 格式化日期时间函数
+// 格式化日期時間為本地格式（YYYY-MM-DDTHH:MM，用於表單）
 function formatDateTimeLocal(date) {
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始
+    const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
     return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
+// 格式化日期時間為顯示格式（YYYY-MM-DD HH:MM，用於顯示）
 function formatDateTimeDisplay(date) {
-    // 格式化日期时间为 YYYY-MM-DD HH:MM
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始
+    const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
     return `${year}-${month}-${day} ${hours}:${minutes}`;
 }
 
-// 当前选择的排序方式
+// 用於記錄當前的備忘錄排序方式
 let currentSortBy = "time";
 
-// 获取备忘录列表
+// 獲取備忘錄列表，並更新顯示
 async function fetchMemos() {
     const response = await fetch(`/api/memos?sort_by=${currentSortBy}`);
     if (response.ok) {
@@ -32,14 +32,14 @@ async function fetchMemos() {
         const memoList = document.getElementById('memo-list');
         memoList.innerHTML = '';
         memos.forEach(memo => {
-            // 处理提醒时间
+            // 生成提醒時間顯示
             let reminderTimeText = '未設定';
             let reminderTimeClass = '';
             if (memo.reminder_time) {
                 const reminderTime = new Date(memo.reminder_time);
                 reminderTimeText = formatDateTimeDisplay(reminderTime);
 
-                // 检查是否小于1天
+                // 如果時間小於一天，顯示警告樣式
                 const now = new Date();
                 const diffTime = reminderTime - now;
                 const diffDays = diffTime / (1000 * 60 * 60 * 24);
@@ -48,7 +48,7 @@ async function fetchMemos() {
                 }
             }
 
-            // 处理完成状态
+            // 處理完成狀態
             let completedClass = '';
             let titleStyle = '';
             let completeButtonClass = 'btn-outline-success';
@@ -60,7 +60,7 @@ async function fetchMemos() {
                 completeButtonText = '復原';
             }
 
-            // 渲染备忘录
+            // 渲染備忘錄項目
             const memoItem = document.createElement('div');
             memoItem.className = 'col-md-4 memo-item';
             if (memo.type === 'important') {
@@ -102,19 +102,18 @@ async function fetchMemos() {
     }
 }
 
-// 初始化拖放功能
+// 初始化備忘錄拖放功能
 function initializeDragAndDrop() {
     const memoList = document.getElementById('memo-list');
     if (memoList.getAttribute('data-sortable-initialized') === 'true') {
-        // 已初始化，避免重复初始化
         return;
     }
 
     Sortable.create(memoList, {
         animation: 150,
-        handle: '.card', // 可以选择拖动的区域，例如整个卡片
+        handle: '.card',
         onEnd: function (evt) {
-            // 获取新的排序顺序
+            // 取得新的排序順序
             const sortedItems = Array.from(memoList.children).map(child => {
                 // 从按钮的 onclick 属性中提取 memo.id
                 const completeButton = child.querySelector('.btn-outline-success, .btn-outline-warning');
@@ -123,7 +122,7 @@ function initializeDragAndDrop() {
                 return idMatch ? parseInt(idMatch[1]) : null;
             }).filter(id => id !== null);
 
-            // 构建排序数据
+            // 構建排序數據
             const sortData = sortedItems.map((id, index) => {
                 return {
                     id: id,
@@ -131,10 +130,10 @@ function initializeDragAndDrop() {
                 };
             });
 
-            // 发送排序数据到后端
+            // 更新排序數據
             updateMemosSort(sortData);
 
-            // 自动切换排序选单为“自定义排序”
+            // 切換排序選單為自訂
             const sortSelect = document.getElementById('sort-options');
             sortSelect.value = 'custom';
             currentSortBy = 'custom';
@@ -144,7 +143,7 @@ function initializeDragAndDrop() {
     memoList.setAttribute('data-sortable-initialized', 'true');
 }
 
-// 发送排序数据到后端
+// 發送排序數據到後端
 async function updateMemosSort(sortData) {
     const response = await fetch('/api/memos/sort', {
         method: 'POST',
@@ -165,17 +164,18 @@ document.getElementById('logout')?.addEventListener('click', async () => {
     window.location.href = '/login';
 });
 
-// 新增备忘录
+// 新增備忘錄
 document.getElementById('create-memo')?.addEventListener('click', () => {
     openMemoModal();
 });
 
-// 监听排序选单的变化
+// 排序選單變更監聽器
 document.getElementById('sort-options').addEventListener('change', (e) => {
     currentSortBy = e.target.value;
     fetchMemos();
 });
 
+// 開啟備忘錄彈窗
 function openMemoModal(memo = {}) {
     const modal = document.getElementById('memo-modal');
     modal.classList.add('show');
@@ -187,7 +187,7 @@ function openMemoModal(memo = {}) {
     document.getElementById('memo-form').onsubmit = (e) => {
         e.preventDefault();
         
-        // 獲取提醒時間的輸入值
+        // 檢查提醒時間
         const reminderTimeInput = document.getElementById('memo-reminder-time').value;
         const reminderTime = new Date(reminderTimeInput);
         const now = new Date();
@@ -195,7 +195,7 @@ function openMemoModal(memo = {}) {
         // 檢查提醒時間是否為未來時間
         if (isNaN(reminderTime.getTime()) || reminderTime <= now) {
             alert("提醒時間無效，必須設置為今天之後");
-            return; // 如果無效，終止提交
+            return;
         }
         
         if (memo.id) {
@@ -207,6 +207,7 @@ function openMemoModal(memo = {}) {
     };
 }
 
+// 關閉備忘錄彈窗
 function closeMemoModal() {
     const modal = document.getElementById('memo-modal');
     modal.classList.remove('show');
@@ -219,6 +220,7 @@ window.onclick = function(event) {
     }
 };
 
+// 新增備忘錄功能
 async function createMemo() {
     const title = document.getElementById('memo-title').value;
     const content = document.getElementById('memo-content').value;
@@ -238,6 +240,7 @@ async function createMemo() {
     fetchMemos();
 }
 
+// 編輯備忘錄功能
 async function editMemo(id) {
     const response = await fetch(`/api/memos`);
     const memos = await response.json();
@@ -245,6 +248,7 @@ async function editMemo(id) {
     openMemoModal(memo);
 }
 
+// 更新備忘錄功能
 async function updateMemo(id) {
     const title = document.getElementById('memo-title').value;
     const content = document.getElementById('memo-content').value;
@@ -264,20 +268,18 @@ async function updateMemo(id) {
     fetchMemos();
 }
 
+// 刪除備忘錄功能
 async function deleteMemo(id) {
-    // 顯示確認框，詢問用戶是否確定要刪除
     const confirmed = confirm("確定要刪除這個備忘錄嗎？這個操作無法撤回。");
-
-    // 如果用戶選擇確定，則執行刪除操作
     if (confirmed) {
         await fetch(`/api/memos/${id}`, {
             method: 'DELETE'
         });
-        fetchMemos(); // 重新獲取備忘錄列表
+        fetchMemos();
     }
 }
 
-// 新增函数：切换完成状态
+// 切換完成狀態功能
 async function toggleCompleteMemo(id) {
     const response = await fetch(`/api/memos/${id}/complete`, {
         method: 'POST'
@@ -286,9 +288,9 @@ async function toggleCompleteMemo(id) {
         const data = await response.json();
         fetchMemos();
     } else {
-        alert('更新完成状态失败');
+        alert('更新完成狀態失敗');
     }
 }
 
-// 初始化加载备忘录列表
+// 初始化時載入備忘錄列表
 fetchMemos();
