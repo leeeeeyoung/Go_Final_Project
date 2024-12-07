@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+// SendEmail 發送電子郵件
+// 參數: 接收者地址 (to)、主旨 (subject)、內容 (body)
 func SendEmail(to, subject, body string) error {
 	from := "son60712@gmail.com"
 	password := "fbdg yrrm aclv pouv" //應用程式密碼
@@ -17,17 +19,18 @@ func SendEmail(to, subject, body string) error {
 	// 建立郵件訊息
 	message := fmt.Sprintf("From: %s\nTo: %s\nSubject: %s\n\n%s", from, to, subject, body)
 
+	// 使用 SMTP 驗證並發送郵件
 	auth := smtp.PlainAuth("", from, password, smtpHost)
 	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, []string{to}, []byte(message))
 	return err
 }
 
+// ReminderService 定期檢查備忘錄，若需要提醒則發送郵件
 func ReminderService() {
 	for {
 		now := time.Now()
 		var memos []Memo
 
-		// 查詢所有有提醒時間的備忘錄，並載入用戶資料
 		db.Preload("User").Where("reminder_time IS NOT NULL AND completed = ?", false).Find(&memos)
 
 		for _, memo := range memos {
@@ -46,9 +49,11 @@ func ReminderService() {
 	}
 }
 
+// SendReminder 發送備忘錄的提醒郵件
+// 參數: 備忘錄資料 (memo)
 func SendReminder(memo Memo) error {
 	if memo.UserID == 0 || memo.User.Email == "" {
-		return fmt.Errorf("用戶無電子郵件地址或未關聯用戶")
+		return fmt.Errorf("用戶無電子郵件地址或未有關聯用戶")
 	}
 
 	subject := fmt.Sprintf("提醒: %s", memo.Title)
