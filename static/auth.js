@@ -1,3 +1,6 @@
+// static/auth.js
+
+// 處理登入表單提交
 document.getElementById('login-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const response = await fetch('/api/login', {
@@ -15,6 +18,7 @@ document.getElementById('login-form')?.addEventListener('submit', async (e) => {
     }
 });
 
+// 處理註冊表單提交
 document.getElementById('register-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const response = await fetch('/api/register', {
