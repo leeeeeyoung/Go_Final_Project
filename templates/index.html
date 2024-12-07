@@ -1,3 +1,5 @@
+<!-- templates/index.html -->
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -5,37 +7,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>備忘錄系統</title>
     
-    <!-- 引入 Google 字體 -->
+    <!-- 引入外部樣式 -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-
-    <!-- Import Google Icon -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=handshake" />
-    
-    <!-- 引入 Font Awesome 圖標 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2DhKNVVucbZ1Z1jYH4Mkg1S5aZgpCgq0JtmRcaHBGXv9PrV3N1tGdy06pazSTXQ4A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
     <!-- 引入自定義樣式 -->
     <link rel="stylesheet" href="/static/styles.css">
     
-    <!-- 引入 Bootstrap CSS -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- 引入 SortableJS -->
+    <!-- 引入外部JS -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     
-    <!-- 引入自定義 JavaScript -->
+    <!-- 引入自定義JS -->
     <script defer src="/static/app.js"></script>
     <script defer src="/static/index.js"></script>
 </head>
 <body>
-    <!-- Hamburger Menu Icon -->
     <div class="hamburger" onclick="toggleSidebar()">
         <div class="line"></div>
         <div class="line"></div>
         <div class="line"></div>
     </div>
 
-    <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <ul class="sidebar-menu">
             <div class="background">
@@ -46,7 +40,6 @@
         </ul>
     </div>
 
-    <!-- 導航欄 -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
         <a class="navbar-brand">備忘錄系統</a>
         <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
@@ -58,13 +51,10 @@
         </div>
     </nav>
     
-    <!-- 主內容區域 -->
     <div class="container">
         <h1 class="page-title">您的備忘錄</h1>
-        
-        <!-- 排序選單和新增備忘錄按鈕 -->
+
         <div class="d-flex justify-content-between mb-4">
-            <!-- 排序選單 -->
             <div>
                 <select class="form-control" id="sort-options">
                     <option value="time">按時間排序</option>
@@ -72,20 +62,15 @@
                     <option value="custom">自訂義排序</option>
                 </select>
             </div>
-            
-            <!-- 新增備忘錄按鈕 -->
             <div>
                 <button class="btn btn-primary" id="create-memo"><i class="fas fa-plus"></i> 新增備忘錄</button>
             </div>
         </div>
         
-        <!-- 備忘錄列表 -->
         <div class="row" id="memo-list">
-            <!-- 備忘錄項目將通過 JavaScript 動態生成 -->
         </div>
     </div>
     
-    <!-- 備忘錄模態框 -->
     <div class="modal" id="memo-modal">
         <div class="modal-dialog">
             <div class="modal-content">
