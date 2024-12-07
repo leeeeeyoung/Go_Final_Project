@@ -18,22 +18,27 @@ import (
 
 var templates = template.Must(template.ParseGlob("templates/*.html"))
 
+// 將訪問者重新載入到登入頁面
 func RedirectToLogin(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
+// 渲染主頁面 (index.html)
 func IndexPage(w http.ResponseWriter, r *http.Request) {
 	templates.ExecuteTemplate(w, "index.html", nil)
 }
 
+// 渲染登入頁面 (login.html)
 func LoginPage(w http.ResponseWriter, r *http.Request) {
 	templates.ExecuteTemplate(w, "login.html", nil)
 }
 
+// 渲染註冊頁面 (register.html)
 func RegisterPage(w http.ResponseWriter, r *http.Request) {
 	templates.ExecuteTemplate(w, "register.html", nil)
 }
 
+// 處理使用者註冊請求
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	var creds Credentials
 	json.NewDecoder(r.Body).Decode(&creds)
@@ -56,6 +61,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+// 處理使用者登入請求
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var creds Credentials
 	json.NewDecoder(r.Body).Decode(&creds)
@@ -92,6 +98,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// 處理使用者登出請求，清除登入的 token
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:   "token",
@@ -102,34 +109,31 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// GetUser 函數
+// 從 cookie 中獲取 token，驗證後回傳使用者資訊
 func GetUserHandler(w http.ResponseWriter, r *http.Request) {
-	// 從 Cookie 中取得 token
 	cookie, err := r.Cookie("token")
 	if err != nil {
 		http.Error(w, "Missing token", http.StatusUnauthorized)
 		return
 	}
 
-	// 驗證 token 並取得用戶 ID
 	userId, err := ParseJWT(cookie.Value)
 	if err != nil {
 		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
 
-	// 查詢資料庫中該用戶的資料
 	var user User
 	if err := db.First(&user, userId).Error; err != nil {
 		http.Error(w, "Error fetching user data", http.StatusInternalServerError)
 		return
 	}
 
-	// 將使用者資料轉為 JSON 回傳
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode([]User{user})
 }
 
+// 根據排序條件返回使用者的備忘錄列表
 func GetMemosHandler(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(UserIDKey).(int)
 	if !ok {
@@ -137,37 +141,31 @@ func GetMemosHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 取得排序參數
 	sortBy := r.URL.Query().Get("sort_by") // "time", "importance", "custom"
 	var memos []Memo
 
 	switch sortBy {
 	case "time":
-		// 按提醒时间排序，如果提醒时间相同，按重要程度排序
 		db.Where("user_id = ?", userID).
 			Order("reminder_time ASC").
 			Order("CASE WHEN type = 'important' THEN 1 ELSE 2 END ASC").
 			Find(&memos)
 	case "importance":
-		// 按重要程度排序，如果重要程度相同，按提醒时间排序
 		db.Where("user_id = ?", userID).
 			Order("CASE WHEN type = 'important' THEN 1 ELSE 2 END ASC").
 			Order("reminder_time ASC").
 			Find(&memos)
 	case "custom":
-		// 按 SortOrder 排序
 		db.Where("user_id = ?", userID).
 			Order("sort_order ASC").
 			Find(&memos)
 	default:
-		// 預設排序，依提醒時間排序
 		db.Where("user_id = ?", userID).
 			Order("reminder_time ASC").
 			Order("CASE WHEN type = 'important' THEN 1 ELSE 2 END ASC").
 			Find(&memos)
 	}
 
-	// 建構響應數據
 	type MemoResponse struct {
 		ID           uint    `json:"id"`
 		UserID       uint    `json:"user_id"`
@@ -201,6 +199,7 @@ func GetMemosHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(memosResponse)
 }
 
+// 處理新增備忘錄的請求，包含提醒時間和排序邏輯
 func CreateMemoHandler(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(UserIDKey).(int)
 	if !ok {
@@ -211,7 +210,6 @@ func CreateMemoHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&memo)
 	memo.UserID = uint(userID)
 
-	// 解析提醒时间
 	if strings.TrimSpace(memo.ReminderTimeStr) != "" {
 		location, _ := time.LoadLocation("Local")
 		reminderTime, err := time.ParseInLocation("2006-01-02T15:04", memo.ReminderTimeStr, location)
@@ -224,12 +222,10 @@ func CreateMemoHandler(w http.ResponseWriter, r *http.Request) {
 		memo.ReminderTime = nil
 	}
 
-	// 設定 SortOrder 為目前使用者的最大 SortOrder + 1
 	var maxSortOrder int
 	db.Model(&Memo{}).Where("user_id = ?", userID).Select("COALESCE(MAX(sort_order), 0)").Scan(&maxSortOrder)
 	memo.SortOrder = maxSortOrder + 1
 
-	// 儲存到資料庫
 	if err := db.Create(&memo).Error; err != nil {
 		http.Error(w, "Error creating memo", http.StatusInternalServerError)
 		log.Printf("Error creating memo: %v", err)
@@ -238,6 +234,7 @@ func CreateMemoHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+// 更新指定備忘錄的內容
 func UpdateMemoHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
@@ -272,12 +269,10 @@ func UpdateMemoHandler(w http.ResponseWriter, r *http.Request) {
 	var updatedMemo Memo
 	json.NewDecoder(r.Body).Decode(&updatedMemo)
 
-	// 更新字段
 	memo.Title = updatedMemo.Title
 	memo.Content = updatedMemo.Content
 	memo.Type = updatedMemo.Type
 
-	// 解析提醒时间
 	if strings.TrimSpace(updatedMemo.ReminderTimeStr) != "" {
 		location, _ := time.LoadLocation("Local")
 		reminderTime, err := time.ParseInLocation("2006-01-02T15:04", updatedMemo.ReminderTimeStr, location)
@@ -290,7 +285,6 @@ func UpdateMemoHandler(w http.ResponseWriter, r *http.Request) {
 		memo.ReminderTime = nil
 	}
 
-	// 儲存到資料庫
 	if err := db.Save(&memo).Error; err != nil {
 		http.Error(w, "Error updating memo", http.StatusInternalServerError)
 		log.Printf("Error updating memo: %v", err)
@@ -299,6 +293,7 @@ func UpdateMemoHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// 刪除指定的備忘錄
 func DeleteMemoHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
@@ -334,7 +329,7 @@ func DeleteMemoHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// 新增函數：切換完成狀態
+// 切換指定備忘錄的完成狀態
 func CompleteMemoHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
@@ -367,7 +362,6 @@ func CompleteMemoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Toggle Completed status
 	memo.Completed = !memo.Completed
 
 	if err := db.Save(&memo).Error; err != nil {
@@ -382,6 +376,7 @@ func CompleteMemoHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// 更新備忘錄的排序順序
 func UpdateMemosSortHandler(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(UserIDKey).(int)
 	if !ok {
@@ -399,7 +394,6 @@ func UpdateMemosSortHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 確保資料一致性
 	tx := db.Begin()
 	if tx.Error != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
