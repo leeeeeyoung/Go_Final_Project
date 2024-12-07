@@ -1,3 +1,6 @@
+// static/index.js
+
+// 切換側邊欄顯示與隱藏
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const hamburger = document.querySelector('.hamburger');
@@ -11,6 +14,7 @@ function toggleSidebar() {
     }
 }
 
+// 當頁面內容載入完成後執行
 document.addEventListener("DOMContentLoaded", function() {
     fetch('/api/user')
         .then(response => response.json())
