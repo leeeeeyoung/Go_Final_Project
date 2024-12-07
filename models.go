@@ -1,3 +1,5 @@
+// models.go
+
 package main
 
 import (
@@ -9,8 +11,10 @@ import (
 	"gorm.io/gorm"
 )
 
+// JWT 金鑰
 var jwtKey []byte
 
+// 用戶資料結構
 type User struct {
 	gorm.Model
 	Username string `gorm:"type:varchar(100);uniqueIndex;not null" json:"username"`
@@ -19,6 +23,7 @@ type User struct {
 	Memos    []Memo `json:"memos"`
 }
 
+// 備忘錄資料結構
 type Memo struct {
 	gorm.Model
 	UserID          uint       `gorm:"not null" json:"user_id"`
@@ -32,22 +37,26 @@ type Memo struct {
 	SortOrder       int        `gorm:"default:0;index" json:"sort_order"`
 }
 
+// 用戶登入/註冊的認證資料
 type Credentials struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Email    string `json:"email"`
 }
 
+// HashPassword 將密碼進行加密
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(bytes), err
 }
 
+// CheckPasswordHash 驗證密碼是否正確
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
 }
 
+// GenerateJWT 生成用戶的 JWT token
 func GenerateJWT(userID int) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := jwt.MapClaims{
@@ -58,11 +67,9 @@ func GenerateJWT(userID int) (string, error) {
 	return token.SignedString(jwtKey)
 }
 
-// ParseJWT 用來解析並驗證 JWT token，並返回 user ID
+// ParseJWT 解析並驗證 JWT token，返回用戶 ID
 func ParseJWT(tokenString string) (int, error) {
-	// 解析並驗證 token
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// 驗證使用的簽名方法
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
@@ -73,7 +80,6 @@ func ParseJWT(tokenString string) (int, error) {
 		return 0, err
 	}
 
-	// 從 claims 中提取 user_id
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		userID := int(claims["user_id"].(float64))
 		return userID, nil
